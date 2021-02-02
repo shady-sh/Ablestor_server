@@ -58,13 +58,62 @@ router.post("/login", async (req, res) => {
       if (err) {
         console.log(err);
       } else {
+        // db에서 해당 유저의 아이디 조회
         console.log(user);
+        if (user) {
+          crypto.pbkdf2(
+            req.body.password,
+            user.salt,
+            100000,
+            64,
+            "sha512",
+            async (err, key) => {
+              if (err) {
+                console.log(err);
+              } else {
+                const obj = {
+                  email: req.body.email,
+                  password: key.toString("base64"),
+                };
+                const user2 = await User.findOne(obj);
+                if (user2) {
+                  await User.updateOne(
+                    {
+                      email: req.body.email,
+                    },
+                    { $set: { loginCnt: 0 } }
+                  );
+                  req.session.email = user.email;
+                  res.json({
+                    message: "로그인 되었습니다!",
+                    _id: user2._id,
+                    email: user2.email,
+                  });
+                } else {
+                  res.json({
+                    message: false,
+                    sendMsg: "비밀번호 불일치.",
+                  });
+                }
+              }
+            }
+          );
+        } else {
+          res.json({ message: false, sendMsg: "아이디 불일치" });
+        }
       }
     });
   } catch (err) {
     console.log(err);
     res.json({ message: "로그인 실패" });
   }
+});
+
+router.get("/logout", (req, res) => {
+  console.log("로그아웃" + req.sessionID);
+  req.session.destroy(() => {
+    res.json({ message: "로그아웃 되었습니다." });
+  });
 });
 
 module.exports = router;

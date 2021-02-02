@@ -6,4 +6,4 @@ This project was created by express
 
 
 # Project start
-- npm start
+- node bin/www
