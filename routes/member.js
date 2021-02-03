@@ -3,6 +3,8 @@ const User = require("../schemas/user");
 const crypto = require("crypto");
 const router = express.Router();
 
+const LOGIN_FAIL_MSG = "아이디 또는 비밀번호가 일치하지 않습니다.";
+
 //Register
 router.post("/register", async (req, res) => {
   try {
@@ -92,14 +94,17 @@ router.post("/login", async (req, res) => {
                 } else {
                   res.json({
                     message: false,
-                    sendMsg: "비밀번호 불일치.",
+                    sendMsg: LOGIN_FAIL_MSG,
                   });
                 }
               }
             }
           );
         } else {
-          res.json({ message: false, sendMsg: "아이디 불일치" });
+          res.json({
+            message: false,
+            sendMsg: LOGIN_FAIL_MSG,
+          });
         }
       }
     });
@@ -114,6 +119,19 @@ router.get("/logout", (req, res) => {
   req.session.destroy(() => {
     res.json({ message: "로그아웃 되었습니다." });
   });
+});
+
+// 로그인 유저 회원탈퇴
+router.post("/delete", async (req, res) => {
+  try {
+    await User.remove({
+      _id: req.body._id,
+    });
+    res.json({ message: true });
+  } catch (err) {
+    console.log(err);
+    res.json({ message: false });
+  }
 });
 
 module.exports = router;
